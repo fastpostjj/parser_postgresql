@@ -28,13 +28,17 @@ def fill_tables(dbmanager: DBManager) -> None:
 
     hh = HH_sql()
 
-    # готовим файлы для сохранения полученных данных
-    # connector_emp = Connector(file_path_emp )
-    # connector_vac = Connector(file_path)
+    try:
+        # Читаем список работодаттелей из файла
+        with open(path_fav_employers, "r", encoding="utf-8") as file:
+            text = file.read()
+    except FileNotFoundError as error:
+        print(f"Файл {path_fav_employers} не найден", error)
+        input("Для продолжения нажмите любую клавишу.")
+        return
 
-    # Читаем список работодаттелей из файла
-    with open(path_fav_employers, "r", encoding="utf-8") as file:
-        text = file.read()
+    # Очищаем базу данных
+    create_tables(dbmanager)
 
     # Заполняем базу данных данными
     try:
@@ -43,20 +47,18 @@ def fill_tables(dbmanager: DBManager) -> None:
         for item in list_data:
             employer_dict = hh.get_request_employers(item["id"])
             employer = get_employer_from_json(employer_dict)
-
-            # connector_emp.insert_only_unic(employer_dict)
             dbmanager.insert_employer(employer)
 
             # Для каждого работодателя выбираем все вакансии
             # и заполняем таблицу vacancies
             list_vacancies = hh.get_request_employers_vacancies(item["id"])
-            # connector_vac.insert_only_unic(list_vacancies)
             for vacancy_dict in list_vacancies:
                 vacancy = get_vacancy_from_json(vacancy_dict)
                 dbmanager.insert_vacancies(vacancy)
 
     except JSONDecodeError as error:
         print(f"Неправильный формат файла {path_fav_employers}, {error}")
+        input("Для продолжения нажмите любую клавишу.")
 
 
 def count_companies(dbmanager: DBManager) -> None:
@@ -75,6 +77,7 @@ def avg_salary(dbmanager: DBManager) -> None:
     if answer:
         print("Средняя зарплата: ", answer)
 
+
 def all_vacancies(dbmanager: DBManager) -> None:
     answer = dbmanager.get_all_vacancies()
     if answer:
@@ -83,19 +86,20 @@ def all_vacancies(dbmanager: DBManager) -> None:
         for row in answer:
             print(row)
 
+
 def salary_gr_avarage(dbmanager: DBManager) -> None:
     answer = dbmanager.get_vacancies_with_higher_salary()
     if answer:
-        # names = ["Работодатель",  "Вакансия", "Зарплата от", "Зарплата до", "Вал.", "Ссылка"]
-        # print(names)
         for row in answer:
             print(row)
+
 
 def vacancy_keyword(dbmanager: DBManager, keyword: str) -> None:
     answer = dbmanager.get_vacancies_with_keyword(keyword)
     if answer:
         for row in answer:
             print(row)
+
 
 def menu(dbmanager: DBManager) -> None:
     clrscr()
@@ -105,8 +109,7 @@ def menu(dbmanager: DBManager) -> None:
     print("3 - Вывести список всех вакансий")
     print("4 - Вывести список всех вакансий, у которых зарплата выше средней")
     print("5 - Вывести список всех вакансий, в названии которых содержится ключевое слово")
-    print("6 - Выход.")
-    # (Exit - ctrl + Z)
+    print("6 - Возврат в главное меню.")
     try:
         result = input()
         match result:
@@ -130,7 +133,7 @@ def menu(dbmanager: DBManager) -> None:
                 vacancy_keyword(dbmanager, text)
                 input("Для продолжения нажмите любую клавишу.")
             case ("6"):
-                exit()
+                return
     except EOFError:
         exit()
 
@@ -154,7 +157,6 @@ def main():
             match result:
                 case ("1"):
                     try:
-                        create_tables(dbmanager)
                         fill_tables(dbmanager)
                     except Exception as error:
                         print(error)
