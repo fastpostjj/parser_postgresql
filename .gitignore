@@ -1,0 +1,11 @@
+.mypy_cache/
+mypy.ini
+__pycache__
+venv/
+.vscode/
+
+result.json
+result_hh.json
+.coverage
+
+database.ini
