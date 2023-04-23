@@ -48,53 +48,40 @@ __Класс DBManager__ служит для подключения к БД Post
 __Класс Connector__ реализует доступ к файлу. Инициализируется строкой, содержащей путь к файлу. Файл должен содержать данные в json формате.
 
 Methods:
-*   is_valid_json: bool - cheking if file is in JSON-format.
-*   is_file_exist: bool -cheking if file exists
-*   read_file: str - getting text from file data_file
-*   is_file_not_old: bool - checking if file not older than number days
-*   save_date: str - saving data in file data_file
-*   insert: dict | list - insert data in file with saving it's structure.
-*   select: list | KeyError - selecting dates from file.
-        The key is the field for filtering. The value is the desired value.
-*   delete: list | KeyError - deleting date, using query.
+*   is_valid_json: bool - проверят, является ли файл JSON.
+*   is_file_exist: bool - проверяет существует ли файл
+*   read_file: str - получает текст из файла
+*   is_file_not_old: bool - проверяет дату создания файла (больше задданого числа дней)
+*   save_date: str - сохраняет данные в файл
+*   insert: dict | list - вставляет данные в файл с сохранением их структуры
+*   select: list | KeyError - выбирает данные из файла по ключу.
+*   delete: list | KeyError - удаляет данные используя запрос
+*   insert_only_unic() -> str: добавляет данные только если данные с таким id не содержатся в файле. Иначе выбрасывает исключение.
 
-    Atributes:
 
-*   data_file:str - the path to the json-file. It has getter and setter.
-*   text: str - the text from the file
-*   save_date: list - list for saving in file
-*   delete_query: dict - dict for deleting data
-*   select_query: dict - dict for selection data
-*   days_outdate: int - the number of days after which the file
-    is outdated
 
 ## Класс Vacancy
 __Класс Vacancy__ представляет объект для работы с вакансией.
 
 Atributes:
 
-*   id:int -  id of the vacancy on the source site,
-*   title:str - job title,
-*   salary_from: float - minimum salary level,
-*   salary_to: float - maximum salary level,
-*   url:str - vacancy address,
-*   description:str -  job description,
-*   firm_name:str -name of the employer organization,
-*   service:str- the name of the site from which vacancies were received.
-    Takes the values HH and SJ.
+*   id:int -  id вакансии на сайте,
+*   title:str - название вакансии,
+*   salary_from: float - минимальный уровень зарплаты,
+*   salary_to: float - максимальный уровень зарплаты,
+*   url:str - ссылка,
+*   description:str -  описание,
+*   firm_name:str - название работодателя,
+*   service:str- название сайта, откуда взята вакансия.
+    Принимает значения HH или SJ.
 
 ## Класс HH
 __Класс HH__ создан для работы с сайтом hh.ru.
 
 Methods:
 
-*   get_request(self, keywords: str = "",
-                    area: int = 113,
-                    per_page: int = 100,
-                    page: int = 0,) -> None: The method sends a GET request to the site and returns data
-        in JSON format
-*   get_connector(file_name: str) -> Connector:
-        Returns the instance of class Connector
+*   get_request() - получает данные с сайта hh.ru в формате json
+*   get_connector() -> возвращает экземпляр класса Connector
 
 ## Класс HH_sql
 __Класс HH_sql__ унаследован от класса HH.
@@ -119,12 +106,12 @@ __Класс NoVacationError__ создан для обработки исклю
 __Класс Employer__ для представления данных работодателя
 
 Атрибуты:
-*   id
-*   name
-*   description
-*   url
-*   alternate_url
-*   trusted
+*   id - id работодатея на сайте hh.ru
+*   name - название работодателя
+*   description - описание
+*   url - ссылка
+*   alternate_url - альтернативная ссылка
+*   trusted - признак проверки
 
 
 ## Функции
