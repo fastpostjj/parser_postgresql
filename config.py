@@ -22,9 +22,7 @@ def config(filename="database.ini", section="postgresql"):
 
 
 path_fav_employers = os.sep.join(["data", "favorits_ employers.json"])
+filename = "database.ini"
 
-super_job_key = os.getenv("SUPER_JOB_KEY")
-keyword = "Python"
 file_path = os.sep.join(["results", "vacations.json"])
 file_path_emp = os.sep.join(["results", "vacations.json"])
-

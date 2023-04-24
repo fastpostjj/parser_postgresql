@@ -19,6 +19,12 @@ class Connector:
     - select: list | KeyError - selecting dates from file.
         The key is the field for filtering. The value is the desired value.
     - delete: list | KeyError - deleting date, using query.
+    - insert_only_unic() -> str:
+        Method inserts date in file with saving it's structure.
+        It checks if id is not in file.
+        In case empty or wrong date raises KeyError.
+        Returns text - date with insertion.
+
 
     Atributes:
     :param data_file:str - the path to the json-file. It has getter and setter.

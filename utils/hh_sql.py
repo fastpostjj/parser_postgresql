@@ -9,7 +9,7 @@ from utils.hh import HH
 class HH_sql(HH):
     """Class HH_sql for working with hh.ru.
     Methods:
-    
+
     - get_connectordb(file_name: str) -> DBmanager:
         Returns the instance of class DBmanager
 
@@ -71,7 +71,11 @@ class HH_sql(HH):
 
         url = f"https://api.hh.ru/vacancies?employer_id={employer_id}"
 
-        response = requests.get(url, params=params)
+        try:
+            response = requests.get(url, params=params)
+        except Exception as error:
+            print(error)
+            return
 
         if response.status_code:
             is_response_successful = True
@@ -112,6 +116,7 @@ class HH_sql(HH):
             response = requests.get(url, params=params)
         except Exception as error:
             print(error)
+            return
 
         if response.status_code:
             is_response_successful = True

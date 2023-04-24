@@ -3,7 +3,7 @@ import json
 from json import JSONDecodeError
 from prettytable import PrettyTable
 from utils.dbmanager import DBManager
-from config import path_fav_employers
+from config import path_fav_employers, filename
 from utils.func import get_employer_from_json, get_vacancy_from_json
 from utils.hh_sql import HH_sql
 
@@ -40,25 +40,37 @@ def fill_tables(dbmanager: DBManager) -> None:
     # Очищаем базу данных
     create_tables(dbmanager)
 
-    # Заполняем базу данных данными
+    # Читаем данные из файла работодателей
     try:
         list_data = json.loads(text)
-        # Сначала заполняем таблицу employers
-        for item in list_data:
-            employer_dict = hh.get_request_employers(item["id"])
-            employer = get_employer_from_json(employer_dict)
-            dbmanager.insert_employer(employer)
-
-            # Для каждого работодателя выбираем все вакансии
-            # и заполняем таблицу vacancies
-            list_vacancies = hh.get_request_employers_vacancies(item["id"])
-            for vacancy_dict in list_vacancies:
-                vacancy = get_vacancy_from_json(vacancy_dict)
-                dbmanager.insert_vacancies(vacancy)
-
     except JSONDecodeError as error:
         print(f"Неправильный формат файла {path_fav_employers}, {error}")
         input("Для продолжения нажмите любую клавишу.")
+        return
+
+    # Заполняем базу данных данными
+    # Сначала заполняем таблицу employers
+    for item in list_data:
+        employer_dict = hh.get_request_employers(item["id"])
+        employer = get_employer_from_json(employer_dict)
+        try:
+            dbmanager.insert_employer(employer)
+        except Exception as error:
+            print(error)
+            input("Для продолжения нажмите любую клавишу.")
+            return
+
+        # Для каждого работодателя выбираем все вакансии
+        # и заполняем таблицу vacancies
+        list_vacancies = hh.get_request_employers_vacancies(item["id"])
+        for vacancy_dict in list_vacancies:
+            vacancy = get_vacancy_from_json(vacancy_dict)
+            try:
+                dbmanager.insert_vacancies(vacancy)
+            except Exception as error:
+                print(error)
+                input("Для продолжения нажмите любую клавишу.")
+                return
 
 
 def count_companies(dbmanager: DBManager) -> None:
@@ -66,7 +78,7 @@ def count_companies(dbmanager: DBManager) -> None:
     if answer:
         print("Количество вакансий для каждого работодателя: ")
         table = PrettyTable()
-        table.field_names = ["Работодатель",  "Кооличество вакансий"]
+        table.field_names = ["Работодатель",  "Количество вакансий"]
         for row in answer:
             table.add_row(row)
         print(table)
@@ -116,9 +128,10 @@ def menu(dbmanager: DBManager) -> None:
             case ("1"):
                 try:
                     count_companies(dbmanager)
+                    input("Для продолжения нажмите любую клавишу.")
                 except Exception as error:
                     print(error)
-                input("Для продолжения нажмите любую клавишу.")
+                    input("Для продолжения нажмите любую клавишу.")
             case ("2"):
                 avg_salary(dbmanager)
                 input("Для продолжения нажмите любую клавишу.")
@@ -141,32 +154,35 @@ def menu(dbmanager: DBManager) -> None:
 def main():
     try:
         dbmanager = DBManager()
+        while True:
+            clrscr()
+            print("------Парсер вакансий для работы с базой данных Postgresql------")
+            print("Выберите нужное действие:")
+            print("1 - Сделать запрос на сайт hh.ru по списку работодателей и сохранить данные в базе данных")
+            print("2 - Получить данные из базы данных")
+            print("3 - Выход.")
+            # (Exit - ctrl + Z)
+            try:
+                result = input()
+                match result:
+                    case ("1"):
+                        try:
+                            fill_tables(dbmanager)
+                        except Exception as error:
+                            print(error)
+                            input("Для продолжения нажмите любую клавишу.")
+                    case ("2"):
+                        menu(dbmanager)
+                    case ("3"):
+                        exit()
+
+            except EOFError:
+                exit()
     except FileNotFoundError as error:
-        print(error)
-
-    while True:
-        clrscr()
-        print("------Парсер вакансий для работы с базой данных Postgresql------")
-        print("Выберите нужное действие:")
-        print("1 - Сделать запрос на сайт hh.ru по списку работодателей и сохранить данные в базе данных")
-        print("2 - Получить данные из базы данных")
-        print("3 - Выход.")
-        # (Exit - ctrl + Z)
-        try:
-            result = input()
-            match result:
-                case ("1"):
-                    try:
-                        fill_tables(dbmanager)
-                    except Exception as error:
-                        print(error)
-                case ("2"):
-                    menu(dbmanager)
-                case ("3"):
-                    exit()
-
-        except EOFError:
-            exit()
+        print("Ошибка чтения файла database.ini, ", error)
+        exit()
+    except KeyError:
+        print("Неправильно заданы параметры подключения к базе данных в файле", filename)
 
 
 if __name__ == "__main__":

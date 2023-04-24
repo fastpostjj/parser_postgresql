@@ -31,6 +31,10 @@ class DBManager():
      в названии которых содержатся переданные в метод слова, например 'python'.
     - _print_table() - печатает все данные из таблицы, название которой в нее
     передано
+    - change_apostrophe() - для корректного добавления текста
+    в базу postgresql заменяет одинарную кавычку на двойную
+    - is_param_correct() - проверяет наличие в атрибуте param всех
+    необходимых ключей для подключения к базе данных
     """
 
     def __init__(self, database_name='vacancies'):
@@ -43,10 +47,32 @@ class DBManager():
             **self.param
             )
 
-    @staticmethod
-    def get_config():
+    def get_config(self):
         param = config()
+        if not self.is_param_correct(param):
+            raise KeyError
         return param
+
+    @staticmethod
+    def is_param_correct(param) -> bool:
+        """checking if dict param contains all keys:
+        host, user, password, port
+
+        """
+        is_correct = True
+        if "host" not in param:
+            is_correct = False
+        if "user" not in param:
+            is_correct = False
+        if "password" not in param:
+            is_correct = False
+        if "port" not in param:
+            is_correct = False
+        return is_correct
+
+    @staticmethod
+    def change_apostrophe(text: str) -> str:
+        return text.replace("'", "''")
 
     def create_tables(self):
         with self.conn as conn:
@@ -104,7 +130,8 @@ class DBManager():
                     INSERT INTO
                     employers(employer_id, employer_name, description,
                     employer_url, alternate_url, trusted) ''' +\
-                    f'''VALUES ('{employer.id}', '{employer.name}', '{employer.description}', \
+                    f'''VALUES ('{employer.id}', '{employer.name}',\
+ '{self.change_apostrophe(employer.description)}', \
 '{employer.url}', '{employer.alternate_url}',{employer.trusted})
                     ON CONFLICT (employer_id) DO NOTHING;'''
 
@@ -116,11 +143,7 @@ class DBManager():
                     return employer
             except Exception as error:
                 print(error)
-                print(employer)
-
-    # def insert_from_json(data: list | dict):
-    #     if isinstance(data, dict): # json contains 1 item
-    #         vacancy, employer = get_vacancy_from_json(data)
+                print(insert_text)
 
     def insert_vacancies(self, vacancy: Vacancy_sql) -> Vacancy_sql | None:
         with self.conn as conn:
@@ -146,11 +169,11 @@ class DBManager():
                         vacancy.salary_gross,
                         vacancy.published_at,
                         vacancy.url,
-                        vacancy.requirement,
-                        vacancy.responsibility,
+                        self.change_apostrophe(vacancy.requirement) if vacancy.requirement else "",
+                        self.change_apostrophe(vacancy.responsibility) if vacancy.responsibility else "",
                         vacancy.contacts,
-                        vacancy.experience,
-                        vacancy.employment
+                        self.change_apostrophe(vacancy.experience) if vacancy.experience else "",
+                        self.change_apostrophe(vacancy.employment) if vacancy.employment else ""
                         )
                     # print(insert_text)
                     cur.execute(insert_text)
@@ -158,6 +181,7 @@ class DBManager():
                     return vacancy
             except Exception as error:
                 print(error)
+                print(insert_text)
 
     def get_companies_and_vacancies_count(self) -> list:
         '''
